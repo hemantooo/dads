@@ -5,12 +5,26 @@
 
 // ── INIT ────────────────────────────────────────────────────
 let _sb = null;
+let _initError = null;
 try {
   if (typeof supabase !== 'undefined') {
-    _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    if (typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+      _initError = 'SUPABASE_URL is missing or set to placeholder.';
+    } else if (typeof SUPABASE_ANON === 'undefined' || SUPABASE_ANON === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+      _initError = 'SUPABASE_ANON is missing or set to placeholder.';
+    } else {
+      _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    }
+  } else {
+    _initError = 'Supabase SDK is not loaded (check internet connection or script tag).';
   }
 } catch (e) {
+  _initError = e.message;
   console.error('Failed to initialize Supabase client:', e);
+}
+
+function getDbInitError() {
+  return _initError || 'Database client not initialized';
 }
 
 // ── CONNECTION CHECK ────────────────────────────────────────
@@ -33,7 +47,7 @@ async function checkConnection() {
 
 /** Fetch all unsettled raw entries (open orders) */
 async function db_getOpenEntries() {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('raw_entries')
     .select('*')
@@ -45,7 +59,7 @@ async function db_getOpenEntries() {
 
 /** Fetch all raw entries (for customers screen) */
 async function db_getAllEntries() {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('raw_entries')
     .select('*')
@@ -56,7 +70,7 @@ async function db_getAllEntries() {
 
 /** Insert a new raw entry */
 async function db_insertEntry(entry) {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('raw_entries')
     .insert([entry])
@@ -68,7 +82,7 @@ async function db_insertEntry(entry) {
 
 /** Update an existing raw entry by id */
 async function db_updateEntry(id, updates) {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('raw_entries')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -86,7 +100,7 @@ async function db_settleEntry(id) {
 
 /** Delete a raw entry by id */
 async function db_deleteEntry(id) {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { error } = await _sb
     .from('raw_entries')
     .delete()
@@ -98,7 +112,7 @@ async function db_deleteEntry(id) {
 
 /** Fetch all completed orders */
 async function db_getOrders() {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('orders')
     .select('*')
@@ -109,7 +123,7 @@ async function db_getOrders() {
 
 /** Insert a completed order */
 async function db_insertOrder(order) {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('orders')
     .insert([order])
@@ -121,7 +135,7 @@ async function db_insertOrder(order) {
 
 /** Update a completed order */
 async function db_updateOrder(id, updates) {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { data, error } = await _sb
     .from('orders')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -134,7 +148,7 @@ async function db_updateOrder(id, updates) {
 
 /** Delete a completed order */
 async function db_deleteOrder(id) {
-  if (!_sb) throw new Error('Database client not initialized');
+  if (!_sb) throw new Error(getDbInitError());
   const { error } = await _sb
     .from('orders')
     .delete()
